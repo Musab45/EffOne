@@ -7,6 +7,7 @@
 #include "renderer/Mesh.h"
 #include "game/GameLoop.h"
 #include "input/InputManager.h"
+#include <functional>
 
 int main() {
     glfwInit();
@@ -39,8 +40,7 @@ int main() {
     loop.run(
         [&](double dt) {
             InputState s = input.poll();
-            if (s.quit) glfwSetWindowShouldClose(win, true);
-            if (glfwWindowShouldClose(win)) std::exit(0);
+            if (s.quit || glfwWindowShouldClose(win)) { loop.shouldQuit = true; return; }
             // physics placeholder: throttle/brake/steer captured but car not yet simulated
         },
         [&](double alpha) {
@@ -52,4 +52,9 @@ int main() {
             glfwSwapBuffers(win);
         }
     );
+
+    ground.free();
+    glfwDestroyWindow(win);
+    glfwTerminate();
+    return 0;
 }

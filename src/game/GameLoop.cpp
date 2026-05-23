@@ -5,7 +5,7 @@ void GameLoop::run(std::function<void(double)> physicsTick,
                    std::function<void(double)> renderFrame) {
     double prev  = glfwGetTime();
     double accum = 0.0;
-    while (true) {
+    while (!shouldQuit) {
         double now   = glfwGetTime();
         double delta = now - prev;
         prev = now;
