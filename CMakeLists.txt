@@ -19,6 +19,7 @@ FetchContent_MakeAvailable(glm)
 add_library(glad STATIC vendor/glad/src/glad.c)
 target_include_directories(glad PUBLIC vendor/glad/include)
 
-add_executable(f1sim src/main.cpp)
+file(GLOB_RECURSE SRC src/*.cpp)
+add_executable(f1sim ${SRC})
 target_include_directories(f1sim PRIVATE src vendor/glad/include)
 target_link_libraries(f1sim PRIVATE glfw glm glad)
