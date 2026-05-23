@@ -9,6 +9,7 @@
 
 static std::string readFile(const char* path) {
     std::ifstream f(path);
+    if (!f) { std::cerr << "Failed to open shader: " << path << "\n"; return ""; }
     std::stringstream ss;
     ss << f.rdbuf();
     return ss.str();
@@ -31,6 +32,8 @@ static GLuint linkProgram(const char* vertPath, const char* fragPath) {
     GLuint p = glCreateProgram();
     glAttachShader(p, v); glAttachShader(p, f);
     glLinkProgram(p);
+    GLint ok; glGetProgramiv(p, GL_LINK_STATUS, &ok);
+    if (!ok) { char log[512]; glGetProgramInfoLog(p, 512, nullptr, log); std::cerr << "Link error:\n" << log; }
     glDeleteShader(v); glDeleteShader(f);
     return p;
 }
@@ -41,8 +44,12 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow* win = glfwCreateWindow(1280, 720, "F1 Sim", nullptr, nullptr);
+    if (!win) { std::cerr << "Failed to create GLFW window\n"; glfwTerminate(); return 1; }
     glfwMakeContextCurrent(win);
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    glfwSwapInterval(1); // enable VSync
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD\n"; return 1;
+    }
     glEnable(GL_DEPTH_TEST);
 
     float verts[] = {
@@ -60,6 +67,7 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    // NOTE: exe must be run from project root so relative shader paths resolve correctly
     GLuint prog = linkProgram("assets/shaders/simple.vert", "assets/shaders/simple.frag");
     glm::mat4 mvp = glm::mat4(1.0f);
 
