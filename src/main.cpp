@@ -5,6 +5,8 @@
 #include <iostream>
 #include "renderer/Shader.h"
 #include "renderer/Mesh.h"
+#include "game/GameLoop.h"
+#include "input/InputManager.h"
 
 int main() {
     glfwInit();
@@ -30,18 +32,24 @@ int main() {
     glm::mat4 view  = glm::lookAt(glm::vec3(0,10,20), glm::vec3(0,0,0), glm::vec3(0,1,0));
     glm::mat4 model = glm::mat4(1.0f);
 
-    while (!glfwWindowShouldClose(win)) {
-        glfwPollEvents();
-        if (glfwGetKey(win, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(win, true);
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        shader.bind();
-        shader.setMat4("uMVP", proj * view * model);
-        ground.draw();
-        glfwSwapBuffers(win);
-    }
+    InputManager input;
+    input.init(win);
 
-    ground.free();
-    glfwTerminate();
+    GameLoop loop;
+    loop.run(
+        [&](double dt) {
+            InputState s = input.poll();
+            if (s.quit) glfwSetWindowShouldClose(win, true);
+            if (glfwWindowShouldClose(win)) std::exit(0);
+            // physics placeholder: throttle/brake/steer captured but car not yet simulated
+        },
+        [&](double alpha) {
+            glClearColor(0.05f, 0.05f, 0.05f, 1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            shader.bind();
+            shader.setMat4("uMVP", proj * view * model);
+            ground.draw();
+            glfwSwapBuffers(win);
+        }
+    );
 }
