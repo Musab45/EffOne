@@ -16,6 +16,8 @@
 #include "physics/Aerodynamics.h"
 #include "physics/Powertrain.h"
 #include "hud/HUD.h"
+#include "track/Track.h"
+#include "track/TrackCollision.h"
 #include <functional>
 
 int main() {
@@ -52,6 +54,11 @@ int main() {
     Suspension   susp;
     Aerodynamics aero;
     Powertrain   pt;
+
+    Track          track;
+    TrackCollision collision;
+    track.buildCircle(80.0f, 200);  // 80m radius circle test track
+    collision.init(&track);
 
     GameLoop loop;
     loop.run(
@@ -114,8 +121,7 @@ int main() {
 
             rb.integrate(vs, (float)dt);
 
-            // Ground plane clamp (replaced by raycasts in Task 8)
-            if (vs.position.y < 0.3f) { vs.position.y = 0.3f; vs.velocity.y = 0.0f; }
+            collision.resolveWheels(vs, susp.springRate, susp.restLength);
         },
         [&](double /*alpha*/) {
             glClearColor(0.05f, 0.05f, 0.05f, 1);
