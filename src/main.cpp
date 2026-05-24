@@ -110,11 +110,14 @@ int main() {
             glm::vec3 forward = R * glm::vec3(0,0,-1);
             glm::vec3 right   = R * glm::vec3(1,0,0);
 
+            // Spring contact forces must be in the accumulator BEFORE integrate
+            // so gravity is balanced within the same tick.
+            collision.resolveWheels(vs, rb, susp.springRate, susp.restLength);
+
             // Per-wheel longitudinal + lateral tire forces (Pacejka via TireModel).
-            // Drive torque is delivered through wheelSpeed (Powertrain::update)
-            // so longitudinal force comes purely from slip ratio. Front wheels
-            // steer, so their forward/right directions follow the steer angle.
-            float carSpeed = glm::length(vs.velocity);
+            // Use horizontal speed only — vertical falling velocity must not create
+            // artificial slip ratios that generate torques and spin the car.
+            float carSpeed = glm::length(glm::vec2(vs.velocity.x, vs.velocity.z));
             for (int i = 0; i < 4; ++i) {
                 glm::vec3 wheelFwd   = forward;
                 glm::vec3 wheelRight = right;
@@ -141,8 +144,6 @@ int main() {
             }
 
             rb.integrate(vs, (float)dt);
-
-            collision.resolveWheels(vs, rb, susp.springRate, susp.restLength);
             cam.update(vs, (float)dt);
             float progress = track.lapProgress(vs.position);
             bool newLap = lapTimer.update(progress, (float)dt);
