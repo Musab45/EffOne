@@ -65,6 +65,11 @@ int main() {
     track.buildCircle(80.0f, 200);  // 80m radius circle test track
     collision.init(&track);
 
+    float lapTime    = 0.0f;
+    float bestLap    = 0.0f;
+    float sectorTime[3]  = {};
+    float bestSector[3]  = {};
+
     GameLoop loop;
     loop.run(
         [&](double dt) {
@@ -128,6 +133,7 @@ int main() {
 
             collision.resolveWheels(vs, susp.springRate, susp.restLength);
             cam.update(vs, (float)dt);
+            lapTime += (float)dt;
         },
         [&](double /*alpha*/) {
             glm::mat4 trackModel = glm::mat4(1.0f);
@@ -137,6 +143,7 @@ int main() {
             float speed = glm::length(vs.velocity) * 3.6f;
             postfx.apply(vs, speed);
             hud.beginFrame();
+            hud.drawRaceOverlay(vs, lapTime, bestLap, sectorTime, bestSector, 1280, 720);
             hud.drawTelemetry(vs);
             hud.endFrame();
             glfwSwapBuffers(win);
