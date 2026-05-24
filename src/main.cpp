@@ -15,6 +15,7 @@
 #include "physics/Suspension.h"
 #include "physics/Aerodynamics.h"
 #include "physics/Powertrain.h"
+#include "hud/HUD.h"
 #include <functional>
 
 int main() {
@@ -42,6 +43,9 @@ int main() {
     InputManager input;
     input.init(win);
 
+    HUD hud;
+    hud.init(win);
+
     VehicleState vs;
     RigidBody    rb;
     TireModel    tire;
@@ -65,6 +69,7 @@ int main() {
             if (in.gearUp   && vs.gear < 8) vs.gear++;
             if (in.gearDown && vs.gear > 1) vs.gear--;
             if (in.drs) vs.drsOpen = !vs.drsOpen;
+            if (in.toggleTelemetry) hud.showTelemetry = !hud.showTelemetry;
 
             // 1. Powertrain (updates rpm, wheelSpeed, slipRatio)
             pt.update(vs, (float)dt);
@@ -123,10 +128,14 @@ int main() {
             shader.bind();
             shader.setMat4("uMVP", mvp);
             ground.draw();
+            hud.beginFrame();
+            hud.drawTelemetry(vs);
+            hud.endFrame();
             glfwSwapBuffers(win);
         }
     );
 
+    hud.shutdown();
     ground.free();
     glfwDestroyWindow(win);
     glfwTerminate();
