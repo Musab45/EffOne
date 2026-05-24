@@ -17,6 +17,7 @@
 #include "physics/Powertrain.h"
 #include "renderer/Camera.h"
 #include "renderer/Renderer.h"
+#include "renderer/PostFX.h"
 #include "hud/HUD.h"
 #include "track/Track.h"
 #include "track/TrackCollision.h"
@@ -47,6 +48,9 @@ int main() {
     Renderer renderer;
     renderer.init();
     Mesh carMesh = Mesh::makeBox(0.5f, 0.2f, 2.25f);
+
+    PostFX postfx;
+    postfx.init(1280, 720);
 
     VehicleState vs;
     RigidBody    rb;
@@ -128,7 +132,10 @@ int main() {
         [&](double /*alpha*/) {
             glm::mat4 trackModel = glm::mat4(1.0f);
             renderer.renderShadowPass(ground, trackModel);
+            postfx.bindHDR();
             renderer.renderScene(cam, vs, ground, carMesh, 1280, 720);
+            float speed = glm::length(vs.velocity) * 3.6f;
+            postfx.apply(vs, speed);
             hud.beginFrame();
             hud.drawTelemetry(vs);
             hud.endFrame();
@@ -136,6 +143,7 @@ int main() {
         }
     );
 
+    postfx.shutdown();
     hud.shutdown();
     renderer.shutdown();
     carMesh.free();

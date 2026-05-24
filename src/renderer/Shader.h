@@ -11,4 +11,5 @@ struct Shader {
     void   setVec3(const char* name, const glm::vec3& v) const;
     void   setFloat(const char* name, float v) const;
     void   setInt(const char* name, int v) const;
+    void   setVec2(const char* name, float x, float y) const;
 };

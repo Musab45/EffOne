@@ -40,3 +40,4 @@ void Shader::setMat4(const char* n, const glm::mat4& m)    const { glUniformMatr
 void Shader::setVec3(const char* n, const glm::vec3& v)    const { glUniform3fv(glGetUniformLocation(id,n),1,glm::value_ptr(v)); }
 void Shader::setFloat(const char* n, float v)               const { glUniform1f(glGetUniformLocation(id,n),v); }
 void Shader::setInt(const char* n, int v)                   const { glUniform1i(glGetUniformLocation(id,n),v); }
+void Shader::setVec2(const char* n, float x, float y)       const { glUniform2f(glGetUniformLocation(id,n),x,y); }
