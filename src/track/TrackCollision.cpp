@@ -2,10 +2,8 @@
 #include <algorithm>
 #include <glm/gtc/quaternion.hpp>
 
-WheelContact TrackCollision::castWheel(const glm::vec3& hubPos, float maxTravel) const {
+WheelContact TrackCollision::castWheel(const glm::vec3& hubPos, float restLen, float maxTravel) const {
     WheelContact c;
-    // Find nearest track point and use its Y as ground height
-    // (Flat track simplification — Task 14 replaces with mesh raycast for Spa)
     int idx  = track->nearestPoint(hubPos);
     const TrackPoint& tp = track->points[idx];
     float groundY = tp.position.y;
@@ -15,7 +13,8 @@ WheelContact TrackCollision::castWheel(const glm::vec3& hubPos, float maxTravel)
         c.hit         = true;
         c.point       = {hubPos.x, groundY, hubPos.z};
         c.normal      = tp.normal;
-        c.compression = std::max(0.0f, maxTravel - dist);
+        // Compression relative to rest length — zero force at rest, positive when squished
+        c.compression = std::max(0.0f, restLen - dist);
         c.gripCoeff   = tp.gripCoeff;
         c.surface     = tp.surface;
     }
@@ -30,7 +29,7 @@ void TrackCollision::resolveWheels(VehicleState& s, RigidBody& rb, float springR
     glm::mat3 R = glm::mat3_cast(s.orientation);
     for (int i = 0; i < 4; ++i) {
         glm::vec3 hub = s.position + R * OFFSETS[i];
-        auto c = castWheel(hub, 0.3f);
+        auto c = castWheel(hub, restLen, 0.3f);
         if (c.hit) {
             s.suspensionCompression[i] = c.compression;
             float springForce = springRate * c.compression;

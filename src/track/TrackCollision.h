@@ -18,7 +18,7 @@ struct TrackCollision {
     void init(const Track* t) { track = t; }
 
     // Cast ray downward from hubPos. Returns contact with nearest track surface.
-    WheelContact castWheel(const glm::vec3& hubPos, float maxTravel) const;
+    WheelContact castWheel(const glm::vec3& hubPos, float restLen, float maxTravel) const;
 
     // Update all 4 wheel contacts and write Fz + suspension into VehicleState.
     // Applies upward spring reaction force to the rigid body for each contact.

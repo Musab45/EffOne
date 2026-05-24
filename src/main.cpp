@@ -39,7 +39,7 @@ int main() {
     }
     glEnable(GL_DEPTH_TEST);
 
-    Mesh ground = Mesh::makeFlat(50.0f, 20);
+    Mesh ground = Mesh::makeFlat(2000.0f, 100);
 
     InputManager input;
     input.init(win);
