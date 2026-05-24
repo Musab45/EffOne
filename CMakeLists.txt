@@ -42,3 +42,7 @@ target_link_libraries(f1sim PRIVATE glfw glm glad imgui_lib)
 if(WIN32)
     target_link_libraries(f1sim PRIVATE winmm)
 endif()
+
+add_executable(track_builder tools/track_builder/main.cpp)
+target_link_libraries(track_builder PRIVATE glm)
+target_include_directories(track_builder PRIVATE vendor/glad/include)

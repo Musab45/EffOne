@@ -22,4 +22,5 @@ struct Track {
     TrackPoint   sample(float t) const;  // t in [0,1], Catmull-Rom interpolated
     int          nearestPoint(const glm::vec3& pos) const;
     float        lapProgress(const glm::vec3& pos) const; // 0..1
+    void         loadSpa(const char* path); // loads binary .spa file
 };

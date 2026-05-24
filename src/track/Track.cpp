@@ -1,6 +1,7 @@
 #include "Track.h"
 #include <cmath>
 #include <limits>
+#include <fstream>
 #include <glm/gtx/norm.hpp>
 
 void Track::buildCircle(float radius, int segments) {
@@ -54,4 +55,24 @@ int Track::nearestPoint(const glm::vec3& pos) const {
 
 float Track::lapProgress(const glm::vec3& pos) const {
     return (float)nearestPoint(pos) / (float)points.size();
+}
+
+void Track::loadSpa(const char* path) {
+    std::ifstream f(path, std::ios::binary);
+    int cnt; f.read((char*)&cnt, sizeof(cnt));
+    points.clear();
+    for (int i = 0; i < cnt; ++i) {
+        // Read BinaryPoint struct (matches tools/track_builder layout)
+        struct BP { float x,y,z,tx,ty,tz,nx,ny,nz,wL,wR,bank; int surf; float grip; };
+        BP bp; f.read((char*)&bp, sizeof(bp));
+        TrackPoint tp;
+        tp.position   = {bp.x,bp.y,bp.z};
+        tp.tangent    = {bp.tx,bp.ty,bp.tz};
+        tp.normal     = {bp.nx,bp.ny,bp.nz};
+        tp.widthLeft  = bp.wL; tp.widthRight = bp.wR;
+        tp.banking    = bp.bank;
+        tp.surface    = (SurfaceType)bp.surf;
+        tp.gripCoeff  = bp.grip;
+        points.push_back(tp);
+    }
 }

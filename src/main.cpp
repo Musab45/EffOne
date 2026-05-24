@@ -22,6 +22,7 @@
 #include "track/Track.h"
 #include "track/TrackCollision.h"
 #include "audio/AudioEngine.h"
+#include "game/LapTimer.h"
 #include <functional>
 
 int main() {
@@ -65,13 +66,10 @@ int main() {
 
     Track          track;
     TrackCollision collision;
-    track.buildCircle(80.0f, 200);  // 80m radius circle test track
+    track.loadSpa("assets/track/spa.spa");
     collision.init(&track);
 
-    float lapTime    = 0.0f;
-    float bestLap    = 0.0f;
-    float sectorTime[3]  = {};
-    float bestSector[3]  = {};
+    LapTimer lapTimer;
 
     GameLoop loop;
     loop.run(
@@ -136,7 +134,9 @@ int main() {
 
             collision.resolveWheels(vs, susp.springRate, susp.restLength);
             cam.update(vs, (float)dt);
-            lapTime += (float)dt;
+            float progress = track.lapProgress(vs.position);
+            bool newLap = lapTimer.update(progress, (float)dt);
+            (void)newLap; // can flash HUD later
             audio.update(vs);
         },
         [&](double /*alpha*/) {
@@ -147,7 +147,8 @@ int main() {
             float speed = glm::length(vs.velocity) * 3.6f;
             postfx.apply(vs, speed);
             hud.beginFrame();
-            hud.drawRaceOverlay(vs, lapTime, bestLap, sectorTime, bestSector, 1280, 720);
+            hud.drawRaceOverlay(vs, lapTimer.lapTime, lapTimer.bestLap,
+                    lapTimer.sectorTime, lapTimer.bestSector, 1280, 720);
             hud.drawTelemetry(vs);
             hud.endFrame();
             glfwSwapBuffers(win);
