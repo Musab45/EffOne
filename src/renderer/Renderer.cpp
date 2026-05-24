@@ -82,6 +82,15 @@ void Renderer::renderScene(const Camera& cam, const VehicleState& vs,
     carMesh.draw();
 }
 
+void Renderer::drawMesh(const Mesh& mesh, const glm::vec3& albedo, float metallic, float roughness) {
+    pbrShader.bind();
+    pbrShader.setMat4("uModel", glm::mat4(1.0f));
+    pbrShader.setVec3("uAlbedo", albedo);
+    pbrShader.setFloat("uMetallic", metallic);
+    pbrShader.setFloat("uRoughness", roughness);
+    mesh.draw();
+}
+
 void Renderer::shutdown() {
     glDeleteFramebuffers(1, &shadowFBO);
     glDeleteTextures(1, &shadowTex);

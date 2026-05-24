@@ -69,6 +69,29 @@ int main() {
     track.loadSpa("assets/track/spa.spa");
     collision.init(&track);
 
+    // Build a road ribbon from the 30 Spa waypoints (dark asphalt strip)
+    Mesh trackRibbon;
+    {
+        std::vector<Vertex> verts;
+        std::vector<unsigned> idx;
+        int n = (int)track.points.size();
+        for (int i = 0; i <= n; ++i) {
+            const TrackPoint& tp = track.points[i % n];
+            glm::vec3 r = glm::normalize(glm::cross(tp.tangent, glm::vec3(0,1,0)));
+            glm::vec3 center = {tp.position.x, 0.01f, tp.position.z};
+            glm::vec3 L = center - r * tp.widthLeft;
+            glm::vec3 R = center + r * tp.widthRight;
+            float u = (float)i / n;
+            verts.push_back({L, {0,1,0}, {0.0f, u}});
+            verts.push_back({R, {0,1,0}, {1.0f, u}});
+        }
+        for (unsigned i = 0; i < (unsigned)n; ++i) {
+            unsigned a=i*2, b=i*2+1, c=i*2+2, d=i*2+3;
+            idx.insert(idx.end(), {a,b,c, b,d,c});
+        }
+        trackRibbon.upload(verts, idx);
+    }
+
     LapTimer lapTimer;
 
     GameLoop loop;
@@ -112,7 +135,7 @@ int main() {
 
             // Spring contact forces must be in the accumulator BEFORE integrate
             // so gravity is balanced within the same tick.
-            collision.resolveWheels(vs, rb, susp.springRate, susp.restLength);
+            collision.resolveWheels(vs, rb, susp.springRate, susp.damperRate, susp.restLength);
 
             // Per-wheel longitudinal + lateral tire forces (Pacejka via TireModel).
             // Use horizontal speed only — vertical falling velocity must not create
@@ -160,6 +183,7 @@ int main() {
             renderer.renderShadowPass(ground, trackModel);
             postfx.bindHDR();
             renderer.renderScene(cam, vs, ground, carMesh, 1280, 720);
+            renderer.drawMesh(trackRibbon, {0.06f,0.06f,0.06f}, 0.0f, 0.95f);
             float speed = glm::length(vs.velocity) * 3.6f;
             postfx.apply(vs, speed);
             hud.beginFrame();
@@ -176,6 +200,7 @@ int main() {
     hud.shutdown();
     renderer.shutdown();
     carMesh.free();
+    trackRibbon.free();
     ground.free();
     glfwDestroyWindow(win);
     glfwTerminate();

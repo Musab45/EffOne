@@ -22,5 +22,5 @@ struct TrackCollision {
 
     // Update all 4 wheel contacts and write Fz + suspension into VehicleState.
     // Applies upward spring reaction force to the rigid body for each contact.
-    void resolveWheels(VehicleState& s, RigidBody& rb, float springRate, float restLength) const;
+    void resolveWheels(VehicleState& s, RigidBody& rb, float springRate, float damperRate, float restLength) const;
 };

@@ -23,6 +23,7 @@ struct Renderer {
     void renderScene(const Camera& cam, const VehicleState& vs,
                      const Mesh& trackMesh, const Mesh& carMesh,
                      int screenW, int screenH);
+    void drawMesh(const Mesh& mesh, const glm::vec3& albedo, float metallic, float roughness);
     void shutdown();
 
 private:
