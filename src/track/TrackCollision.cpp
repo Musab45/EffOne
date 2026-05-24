@@ -25,8 +25,8 @@ WheelContact TrackCollision::castWheel(const glm::vec3& hubPos, float restLen, f
 
 void TrackCollision::resolveWheels(VehicleState& s, RigidBody& rb, float springRate, float damperRate, float restLen) const {
     static const glm::vec3 OFFSETS[4] = {
-        {-0.73f,-0.3f, 1.6f},{0.73f,-0.3f, 1.6f},
-        {-0.73f,-0.3f,-1.5f},{0.73f,-0.3f,-1.5f}
+        {-0.73f,-0.3f,-1.6f},{0.73f,-0.3f,-1.6f}, // FL, FR
+        {-0.73f,-0.3f, 1.5f},{0.73f,-0.3f, 1.5f}  // RL, RR
     };
     glm::mat3 R = glm::mat3_cast(s.orientation);
     for (int i = 0; i < 4; ++i) {

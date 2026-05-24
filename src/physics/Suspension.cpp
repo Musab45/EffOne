@@ -11,10 +11,10 @@ static constexpr float H_COG     = 0.3f;   // height of COG (metres)
 // FL=(-0.73, -0.3, 1.6)  FR=(+0.73, -0.3, 1.6)
 // RL=(-0.73, -0.3,-1.5)  RR=(+0.73, -0.3,-1.5)
 const glm::vec3 WHEEL_OFFSETS[4] = {
-    {-0.73f, -0.3f,  1.6f},
-    { 0.73f, -0.3f,  1.6f},
-    {-0.73f, -0.3f, -1.5f},
-    { 0.73f, -0.3f, -1.5f},
+    {-0.73f, -0.3f, -1.6f}, // FL  (forward = -Z, so front is negative Z)
+    { 0.73f, -0.3f, -1.6f}, // FR
+    {-0.73f, -0.3f,  1.5f}, // RL
+    { 0.73f, -0.3f,  1.5f}, // RR
 };
 
 void Suspension::computeLoads(VehicleState& s, const glm::vec3& accelWorld) const {

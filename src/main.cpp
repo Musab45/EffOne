@@ -151,10 +151,19 @@ int main() {
                 }
 
                 // Longitudinal slip + force
-                float wv    = vs.wheelSpeed[i] * Powertrain::WHEEL_RADIUS;
-                float denom = std::max(carSpeed, 0.5f);
-                vs.slipRatio[i] = (wv - carSpeed) / denom;
-                float longF = tire.longitudinalForce(vs.slipRatio[i], vs.fz[i]);
+                // Use speed along wheel's own forward axis, not horizontal magnitude
+                float vLong_i = glm::dot(vs.velocity, wheelFwd); // positive = forward
+                if (i < 2) {
+                    // Front wheels free-roll: match car speed, no braking force unless brake pedal
+                    vs.wheelSpeed[i] = std::max(0.0f, vLong_i) / Powertrain::WHEEL_RADIUS;
+                    vs.slipRatio[i]  = 0.0f;
+                } else {
+                    float wv    = vs.wheelSpeed[i] * Powertrain::WHEEL_RADIUS;
+                    float denom = std::max(vLong_i, 0.5f);
+                    vs.slipRatio[i] = (wv - vLong_i) / denom;
+                }
+                float longF = (i < 2 && vs.brake < 0.05f) ? 0.0f
+                            : tire.longitudinalForce(vs.slipRatio[i], vs.fz[i]);
                 rb.applyForceAtPoint(wheelFwd * longF, R * WHEEL_OFFSETS[i]);
 
                 // Lateral slip + force (along wheel's steered lateral axis)
