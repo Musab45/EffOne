@@ -46,3 +46,9 @@ endif()
 add_executable(track_builder tools/track_builder/main.cpp)
 target_link_libraries(track_builder PRIVATE glm)
 target_include_directories(track_builder PRIVATE vendor/glad/include)
+
+# Copy assets next to the exe so double-clicking works
+add_custom_command(TARGET f1sim POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:f1sim>/assets")
