@@ -61,7 +61,16 @@ int main(int argc, char* argv[]) {
         int next = (i+1)%n;
         glm::vec3 pos  = {p.x,p.y,p.z};
         glm::vec3 npos = {SPA_WP[next][0], SPA_WP[next][2], SPA_WP[next][1]};
-        glm::vec3 t    = glm::normalize(npos-pos);
+        glm::vec3 tangentVec = npos - pos;
+        glm::vec3 t;
+        if (glm::length(tangentVec) < 1e-6f) {
+            // duplicate point — use previous point's direction
+            int prev = (i - 1 + n) % n;
+            glm::vec3 prevPos = {SPA_WP[prev][0], SPA_WP[prev][2], SPA_WP[prev][1]};
+            t = glm::normalize(pos - prevPos);
+        } else {
+            t = glm::normalize(tangentVec);
+        }
         p.tx=t.x; p.ty=t.y; p.tz=t.z;
         p.nx=0; p.ny=1; p.nz=0;
         p.widthL = p.widthR = SPA_WP[i][3]*0.5f;

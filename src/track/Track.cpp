@@ -2,6 +2,7 @@
 #include <cmath>
 #include <limits>
 #include <fstream>
+#include <iostream>
 #include <glm/gtx/norm.hpp>
 
 void Track::buildCircle(float radius, int segments) {
@@ -59,7 +60,16 @@ float Track::lapProgress(const glm::vec3& pos) const {
 
 void Track::loadSpa(const char* path) {
     std::ifstream f(path, std::ios::binary);
-    int cnt; f.read((char*)&cnt, sizeof(cnt));
+    if (!f.is_open()) {
+        std::cerr << "Track::loadSpa: cannot open " << path << "\n";
+        return;
+    }
+    int cnt = 0;
+    f.read((char*)&cnt, sizeof(cnt));
+    if (cnt <= 0 || cnt > 100000) {
+        std::cerr << "Track::loadSpa: invalid point count " << cnt << "\n";
+        return;
+    }
     points.clear();
     for (int i = 0; i < cnt; ++i) {
         // Read BinaryPoint struct (matches tools/track_builder layout)
