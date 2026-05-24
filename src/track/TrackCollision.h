@@ -1,6 +1,7 @@
 #pragma once
 #include "Track.h"
 #include "../physics/VehicleState.h"
+#include "../physics/RigidBody.h"
 
 struct WheelContact {
     bool      hit         = false;
@@ -20,5 +21,6 @@ struct TrackCollision {
     WheelContact castWheel(const glm::vec3& hubPos, float maxTravel) const;
 
     // Update all 4 wheel contacts and write Fz + suspension into VehicleState.
-    void resolveWheels(VehicleState& s, float springRate, float restLength) const;
+    // Applies upward spring reaction force to the rigid body for each contact.
+    void resolveWheels(VehicleState& s, RigidBody& rb, float springRate, float restLength) const;
 };

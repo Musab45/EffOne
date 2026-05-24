@@ -44,9 +44,22 @@ void Powertrain::update(VehicleState& s, float dt) const {
     float brakeFront = s.brake * MAX_BRAKE_TORQUE * BRAKE_BIAS_FRONT;
     float brakeRear  = s.brake * MAX_BRAKE_TORQUE * (1.0f - BRAKE_BIAS_FRONT);
 
+    // Drive torque accelerates the rear wheels (rear-wheel drive).
+    // Split engine torque across the two rear wheels.
+    float dTorqPerWheel = driveTorque(s.throttle, s.rpm) * 0.5f;
+    constexpr float wheelInertia = 2.0f; // kg·m²
+    // Per-wheel angular speed cap derived from engine rev limiter and gearing.
+    // (Reuses 'ratio' computed at top of update.)
+    float maxWheelSpeed = (RPM_LIMIT / (ratio * 60.0f / (2.0f * 3.14159f))) + 5.0f;
+
     // Longitudinal slip ratio per wheel (simplified: compare wheel speed to car speed)
     float carVelLong = carSpeed;
     for (int i = 0; i < 4; ++i) {
+        // Drive on rear wheels only.
+        if (i >= 2) {
+            s.wheelSpeed[i] += (dTorqPerWheel / (wheelInertia * WHEEL_RADIUS)) * dt;
+            s.wheelSpeed[i]  = std::min(s.wheelSpeed[i], maxWheelSpeed);
+        }
         float brakeTorque = (i < 2 ? brakeFront : brakeRear) * 0.5f;
         s.wheelSpeed[i] -= (brakeTorque / (200.0f * WHEEL_RADIUS)) * dt; // 200kg effective wheel inertia
         s.wheelSpeed[i]  = std::max(0.0f, s.wheelSpeed[i]);

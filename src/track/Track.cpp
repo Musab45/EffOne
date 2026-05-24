@@ -27,6 +27,7 @@ static glm::vec3 catmullRom(const glm::vec3& p0, const glm::vec3& p1,
 }
 
 TrackPoint Track::sample(float t) const {
+    if (points.empty()) return {};
     int n = (int)points.size();
     float ft = t * n;
     int   i  = (int)ft;
@@ -46,6 +47,7 @@ TrackPoint Track::sample(float t) const {
 }
 
 int Track::nearestPoint(const glm::vec3& pos) const {
+    if (points.empty()) return 0;
     int best = 0; float bestD = std::numeric_limits<float>::max();
     for (int i = 0; i < (int)points.size(); ++i) {
         float d = glm::length2(points[i].position - pos);
@@ -55,6 +57,7 @@ int Track::nearestPoint(const glm::vec3& pos) const {
 }
 
 float Track::lapProgress(const glm::vec3& pos) const {
+    if (points.empty()) return 0.0f;
     return (float)nearestPoint(pos) / (float)points.size();
 }
 

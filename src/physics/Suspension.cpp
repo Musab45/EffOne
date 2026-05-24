@@ -1,5 +1,6 @@
 #include "Suspension.h"
 #include <algorithm>
+#include <glm/gtc/quaternion.hpp>
 
 static constexpr float MASS      = 798.0f;
 static constexpr float WHEELBASE = 3.1f;   // metres
@@ -20,9 +21,15 @@ void Suspension::computeLoads(VehicleState& s, const glm::vec3& accelWorld) cons
     // Static load (weight / 4 per corner)
     float staticFz = MASS * 9.81f / 4.0f;
 
-    // Weight transfer
-    float ax = accelWorld.z; // longitudinal (Z in world = forward)
-    float ay = accelWorld.x; // lateral      (X in world = right)
+    // Transform world-space acceleration into car-local frame so weight
+    // transfer is computed against the car's longitudinal/lateral axes
+    // regardless of yaw orientation.
+    glm::mat3 R = glm::mat3_cast(s.orientation);
+    glm::vec3 aLocal = glm::transpose(R) * accelWorld;
+
+    // Weight transfer (car-local: forward = -Z, right = +X)
+    float ax = -aLocal.z; // longitudinal (forward positive)
+    float ay =  aLocal.x; // lateral      (right positive)
     float dFz_long = MASS * ax * H_COG / WHEELBASE * 0.5f;  // front/rear split
     float dFz_lat  = MASS * ay * H_COG / TRACKWIDTH * 0.5f; // left/right split
 

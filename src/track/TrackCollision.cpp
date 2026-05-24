@@ -22,7 +22,7 @@ WheelContact TrackCollision::castWheel(const glm::vec3& hubPos, float maxTravel)
     return c;
 }
 
-void TrackCollision::resolveWheels(VehicleState& s, float springRate, float restLen) const {
+void TrackCollision::resolveWheels(VehicleState& s, RigidBody& rb, float springRate, float restLen) const {
     static const glm::vec3 OFFSETS[4] = {
         {-0.73f,-0.3f, 1.6f},{0.73f,-0.3f, 1.6f},
         {-0.73f,-0.3f,-1.5f},{0.73f,-0.3f,-1.5f}
@@ -33,13 +33,20 @@ void TrackCollision::resolveWheels(VehicleState& s, float springRate, float rest
         auto c = castWheel(hub, 0.3f);
         if (c.hit) {
             s.suspensionCompression[i] = c.compression;
-            s.fz[i] = springRate * c.compression;
+            float springForce = springRate * c.compression;
+            // Don't wipe out the aero + weight-transfer load that
+            // Suspension::computeLoads + downforce accumulation just set.
+            // Take the larger of the two so contact also accumulates with aero.
+            s.fz[i] = std::max(s.fz[i], springForce);
+            // Apply upward spring reaction to the body so gravity is balanced.
+            rb.applyForce({0.0f, springForce, 0.0f});
             // Push car up (keep above ground)
             if (hub.y < c.point.y + 0.01f)
                 s.position.y += (c.point.y + 0.01f - hub.y) * 0.8f;
         } else {
             s.suspensionCompression[i] = 0.0f;
-            s.fz[i] = 0.0f;
+            // No contact: aero-only Fz can remain but there is no spring load.
+            // Leave whatever Suspension/aero accumulated; nothing to add.
         }
     }
 }

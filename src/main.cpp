@@ -110,29 +110,39 @@ int main() {
             glm::vec3 forward = R * glm::vec3(0,0,-1);
             glm::vec3 right   = R * glm::vec3(1,0,0);
 
-            // Drive force on rear wheels
-            float dTorque = pt.driveTorque(vs.throttle, vs.rpm);
-            float driveF  = dTorque / Powertrain::WHEEL_RADIUS;
-            rb.applyForce(forward * driveF * 0.5f);
-
-            // Lateral tire force per wheel
+            // Per-wheel longitudinal + lateral tire forces (Pacejka via TireModel).
+            // Drive torque is delivered through wheelSpeed (Powertrain::update)
+            // so longitudinal force comes purely from slip ratio. Front wheels
+            // steer, so their forward/right directions follow the steer angle.
+            float carSpeed = glm::length(vs.velocity);
             for (int i = 0; i < 4; ++i) {
-                glm::vec3 wheelFwd = forward;
+                glm::vec3 wheelFwd   = forward;
+                glm::vec3 wheelRight = right;
                 if (i < 2) { // front wheels steer
                     glm::mat4 steerRot = glm::rotate(glm::mat4(1.0f), vs.steer, glm::vec3(0,1,0));
-                    wheelFwd = glm::normalize(glm::vec3(steerRot * glm::vec4(forward, 0.0f)));
+                    wheelFwd   = glm::normalize(glm::vec3(steerRot * glm::vec4(forward, 0.0f)));
+                    wheelRight = glm::normalize(glm::vec3(steerRot * glm::vec4(right,   0.0f)));
                 }
-                float vLat  = glm::dot(vs.velocity, right);
+
+                // Longitudinal slip + force
+                float wv    = vs.wheelSpeed[i] * Powertrain::WHEEL_RADIUS;
+                float denom = std::max(carSpeed, 0.5f);
+                vs.slipRatio[i] = (wv - carSpeed) / denom;
+                float longF = tire.longitudinalForce(vs.slipRatio[i], vs.fz[i]);
+                rb.applyForceAtPoint(wheelFwd * longF, R * WHEEL_OFFSETS[i]);
+
+                // Lateral slip + force (along wheel's steered lateral axis)
+                float vLat  = glm::dot(vs.velocity, wheelRight);
                 float vLong = glm::dot(vs.velocity, wheelFwd);
                 vs.slipAngle[i] = (std::abs(vLong) > 0.1f) ? std::atan2(vLat, std::abs(vLong)) : 0.0f;
                 float latF  = tire.lateralForce(vs.slipAngle[i], vs.fz[i]);
-                glm::vec3 latDir = -right * (vs.slipAngle[i] >= 0.0f ? 1.0f : -1.0f);
+                glm::vec3 latDir = -wheelRight * (vs.slipAngle[i] >= 0.0f ? 1.0f : -1.0f);
                 rb.applyForceAtPoint(latDir * std::abs(latF), R * WHEEL_OFFSETS[i]);
             }
 
             rb.integrate(vs, (float)dt);
 
-            collision.resolveWheels(vs, susp.springRate, susp.restLength);
+            collision.resolveWheels(vs, rb, susp.springRate, susp.restLength);
             cam.update(vs, (float)dt);
             float progress = track.lapProgress(vs.position);
             bool newLap = lapTimer.update(progress, (float)dt);
@@ -140,6 +150,11 @@ int main() {
             audio.update(vs);
         },
         [&](double /*alpha*/) {
+            // Drain GLFW event queue once per rendered frame. Doing this here
+            // (instead of inside InputManager::poll, which only runs on physics
+            // ticks) guarantees the window stays responsive even when the
+            // accumulator hasn't built up a tick.
+            glfwPollEvents();
             glm::mat4 trackModel = glm::mat4(1.0f);
             renderer.renderShadowPass(ground, trackModel);
             postfx.bindHDR();

@@ -3,7 +3,9 @@
 void InputManager::init(GLFWwindow* window) { win = window; }
 
 InputState InputManager::poll() {
-    glfwPollEvents();
+    // NOTE: glfwPollEvents() is called once per RENDER frame in main.cpp
+    // (not here) so the window keeps draining events even on frames that
+    // don't run a physics tick.
     InputState s;
     s.quit     = glfwGetKey(win, GLFW_KEY_ESCAPE) == GLFW_PRESS;
     s.throttle = (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS ||
