@@ -16,6 +16,7 @@
 #include "physics/Aerodynamics.h"
 #include "physics/Powertrain.h"
 #include "renderer/Camera.h"
+#include "renderer/Renderer.h"
 #include "hud/HUD.h"
 #include "track/Track.h"
 #include "track/TrackCollision.h"
@@ -35,18 +36,17 @@ int main() {
     }
     glEnable(GL_DEPTH_TEST);
 
-    Shader shader;
-    shader.load("assets/shaders/simple.vert", "assets/shaders/simple.frag");
-
     Mesh ground = Mesh::makeFlat(50.0f, 20);
-
-    glm::mat4 model = glm::mat4(1.0f);
 
     InputManager input;
     input.init(win);
 
     HUD hud;
     hud.init(win);
+
+    Renderer renderer;
+    renderer.init();
+    Mesh carMesh = Mesh::makeBox(0.5f, 0.2f, 2.25f);
 
     VehicleState vs;
     RigidBody    rb;
@@ -126,16 +126,9 @@ int main() {
             cam.update(vs, (float)dt);
         },
         [&](double /*alpha*/) {
-            glClearColor(0.05f, 0.05f, 0.05f, 1);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            glm::mat4 proj = glm::perspective(glm::radians(cam.fov()), 1280.0f/720.0f, 0.05f, 2000.0f);
-            glm::mat4 view = cam.viewMatrix(vs);
-            glm::mat4 mvp  = proj * view * model;
-
-            shader.bind();
-            shader.setMat4("uMVP", mvp);
-            ground.draw();
+            glm::mat4 trackModel = glm::mat4(1.0f);
+            renderer.renderShadowPass(ground, trackModel);
+            renderer.renderScene(cam, vs, ground, carMesh, 1280, 720);
             hud.beginFrame();
             hud.drawTelemetry(vs);
             hud.endFrame();
@@ -144,6 +137,8 @@ int main() {
     );
 
     hud.shutdown();
+    renderer.shutdown();
+    carMesh.free();
     ground.free();
     glfwDestroyWindow(win);
     glfwTerminate();
