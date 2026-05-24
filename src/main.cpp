@@ -15,6 +15,7 @@
 #include "physics/Suspension.h"
 #include "physics/Aerodynamics.h"
 #include "physics/Powertrain.h"
+#include "renderer/Camera.h"
 #include "hud/HUD.h"
 #include "track/Track.h"
 #include "track/TrackCollision.h"
@@ -39,7 +40,6 @@ int main() {
 
     Mesh ground = Mesh::makeFlat(50.0f, 20);
 
-    glm::mat4 proj  = glm::perspective(glm::radians(60.0f), 1280.0f/720.0f, 0.1f, 1000.0f);
     glm::mat4 model = glm::mat4(1.0f);
 
     InputManager input;
@@ -54,6 +54,7 @@ int main() {
     Suspension   susp;
     Aerodynamics aero;
     Powertrain   pt;
+    Camera       cam;
 
     Track          track;
     TrackCollision collision;
@@ -122,13 +123,14 @@ int main() {
             rb.integrate(vs, (float)dt);
 
             collision.resolveWheels(vs, susp.springRate, susp.restLength);
+            cam.update(vs, (float)dt);
         },
         [&](double /*alpha*/) {
             glClearColor(0.05f, 0.05f, 0.05f, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glm::vec3 eye = vs.position + glm::vec3(0, 3, 8);
-            glm::mat4 view = glm::lookAt(eye, vs.position, glm::vec3(0,1,0));
+            glm::mat4 proj = glm::perspective(glm::radians(cam.fov()), 1280.0f/720.0f, 0.05f, 2000.0f);
+            glm::mat4 view = cam.viewMatrix(vs);
             glm::mat4 mvp  = proj * view * model;
 
             shader.bind();
