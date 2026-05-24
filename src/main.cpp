@@ -21,6 +21,7 @@
 #include "hud/HUD.h"
 #include "track/Track.h"
 #include "track/TrackCollision.h"
+#include "audio/AudioEngine.h"
 #include <functional>
 
 int main() {
@@ -51,6 +52,8 @@ int main() {
 
     PostFX postfx;
     postfx.init(1280, 720);
+
+    AudioEngine audio; audio.init();
 
     VehicleState vs;
     RigidBody    rb;
@@ -134,6 +137,7 @@ int main() {
             collision.resolveWheels(vs, susp.springRate, susp.restLength);
             cam.update(vs, (float)dt);
             lapTime += (float)dt;
+            audio.update(vs);
         },
         [&](double /*alpha*/) {
             glm::mat4 trackModel = glm::mat4(1.0f);
@@ -150,6 +154,7 @@ int main() {
         }
     );
 
+    audio.shutdown();
     postfx.shutdown();
     hud.shutdown();
     renderer.shutdown();
